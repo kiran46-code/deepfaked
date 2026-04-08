@@ -1,16 +1,79 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { ShieldCheck, Cpu, Zap, Eye } from "lucide-react";
+import DetectorPanel from "@/components/DetectorPanel";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const features = [
+  {
+    icon: Cpu,
+    title: "EfficientNet B4",
+    desc: "State-of-the-art deep learning architecture for accurate detection",
+  },
+  {
+    icon: Eye,
+    title: "Face Detection",
+    desc: "BlazeFace-powered face extraction for precise analysis",
+  },
+  {
+    icon: Zap,
+    title: "Real-Time",
+    desc: "Get instant results with confidence scoring",
+  },
+];
+
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Background grid */}
+      <div
+        className="fixed inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(185 80% 50%) 1px, transparent 1px), linear-gradient(90deg, hsl(185 80% 50%) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+
+      {/* Radial glow */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
+
+      <div className="relative z-10 flex flex-col items-center px-4 py-16 sm:py-24">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+            Deep<span className="text-gradient">Fake</span> Detector
+          </h1>
+        </div>
+
+        <p className="mb-12 max-w-md text-center text-muted-foreground">
+          Upload an image to analyze it for AI-generated manipulation using
+          advanced deep learning models.
+        </p>
+
+        {/* Detector */}
+        <DetectorPanel />
+
+        {/* Features */}
+        <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm transition-colors hover:border-primary/30"
+            >
+              <f.icon className="mb-3 h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-foreground">{f.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-16 text-xs text-muted-foreground/60">
+          Demo mode · Detection results are simulated
+        </p>
+      </div>
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
