@@ -1,6 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ScanSearch, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import ImageUploader from "./ImageUploader";
 import ScanningOverlay from "./ScanningOverlay";
 import ResultDisplay from "./ResultDisplay";
@@ -12,31 +14,59 @@ const DetectorPanel = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [detection, setDetection] = useState<DetectionResult>(null);
+  const fileDataUrl = useRef<string | null>(null);
 
   const handleImageUpload = useCallback((_file: File, dataUrl: string) => {
     setPreview(dataUrl);
+    fileDataUrl.current = dataUrl;
     setStatus("uploaded");
     setDetection(null);
   }, []);
 
-  const handleScan = useCallback(() => {
+  const handleScan = useCallback(async () => {
+    if (!fileDataUrl.current) return;
     setStatus("scanning");
-    // Simulate ML inference (in production this would call a backend API)
-    const duration = 2500 + Math.random() * 1500;
-    setTimeout(() => {
-      const isFake = Math.random() > 0.5;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("detect-deepfake", {
+        body: { image: fileDataUrl.current },
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        toast.error("Analysis failed. Please try again.");
+        setStatus("uploaded");
+        return;
+      }
+
+      if (data.error) {
+        console.error("API error:", data.error);
+        if (data.error.includes("loading")) {
+          toast.error("Model is warming up. Please wait ~20s and try again.");
+        } else {
+          toast.error(data.error);
+        }
+        setStatus("uploaded");
+        return;
+      }
+
       setDetection({
-        result: isFake ? "fake" : "real",
-        confidence: 0.72 + Math.random() * 0.25,
+        result: data.result,
+        confidence: data.confidence,
       });
       setStatus("done");
-    }, duration);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      toast.error("Something went wrong. Please try again.");
+      setStatus("uploaded");
+    }
   }, []);
 
   const handleReset = useCallback(() => {
     setStatus("idle");
     setPreview(null);
     setDetection(null);
+    fileDataUrl.current = null;
   }, []);
 
   return (
