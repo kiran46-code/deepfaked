@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0))
 
     const hfResponse = await fetch(
-      'https://api-inference.huggingface.co/models/buildborderless/CommunityForensics-DeepfakeDet-ViT',
+      'https://router.huggingface.co/hf-inference/models/buildborderless/CommunityForensics-DeepfakeDet-ViT',
       {
         method: 'POST',
         headers: {
