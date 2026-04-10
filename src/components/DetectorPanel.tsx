@@ -10,17 +10,41 @@ import ResultDisplay from "./ResultDisplay";
 type DetectionResult = { result: "real" | "fake"; confidence: number } | null;
 type Status = "idle" | "uploaded" | "scanning" | "done";
 
+const MODEL_SIZE = 384;
+
+function resizeImageToDataUrl(dataUrl: string, size: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas not supported"));
+      ctx.drawImage(img, 0, 0, size, size);
+      resolve(canvas.toDataURL("image/jpeg", 0.92));
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = dataUrl;
+  });
+}
+
 const DetectorPanel = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [detection, setDetection] = useState<DetectionResult>(null);
   const fileDataUrl = useRef<string | null>(null);
 
-  const handleImageUpload = useCallback((_file: File, dataUrl: string) => {
+  const handleImageUpload = useCallback(async (_file: File, dataUrl: string) => {
     setPreview(dataUrl);
-    fileDataUrl.current = dataUrl;
     setStatus("uploaded");
     setDetection(null);
+    try {
+      const resized = await resizeImageToDataUrl(dataUrl, MODEL_SIZE);
+      fileDataUrl.current = resized;
+    } catch {
+      fileDataUrl.current = dataUrl;
+    }
   }, []);
 
   const handleScan = useCallback(async () => {
