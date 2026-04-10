@@ -1,5 +1,3 @@
-import { decodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -19,80 +17,113 @@ Deno.serve(async (req) => {
       })
     }
 
-    const apiKey = Deno.env.get('HUGGINGFACE_API_KEY')
+    const apiKey = Deno.env.get('LOVABLE_API_KEY')
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'HuggingFace API key not configured' }), {
+      return new Response(JSON.stringify({ error: 'AI API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Strip data URL prefix if present
+    // Strip data URL prefix to get just base64
     const base64Data = image.replace(/^data:image\/[a-zA-Z+]+;base64,/, '')
+    // Detect mime type from data URL
+    const mimeMatch = image.match(/^data:(image\/[a-zA-Z+]+);base64,/)
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg'
 
-    const hfResponse = await fetch(
-      'https://router.huggingface.co/hf-inference/models/buildborderless/CommunityForensics-DeepfakeDet-ViT',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: base64Data,
-          parameters: {
-            image_processor_size: 384,
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert forensic image analyst specializing in detecting AI-generated and manipulated images (deepfakes). Analyze the provided image for signs of AI generation or manipulation.
+
+Look for these indicators:
+- Unnatural skin texture, overly smooth or plastic-looking skin
+- Inconsistent lighting or shadows
+- Artifacts around hair, ears, teeth, glasses, or jewelry
+- Asymmetric facial features that look unnatural
+- Blurred or warped backgrounds
+- Inconsistent reflections in eyes or glasses
+- Unusual patterns in textures (fabric, skin pores, hair strands)
+- Signs of inpainting or blending artifacts
+- Too-perfect symmetry that looks artificial
+
+You MUST respond with ONLY a valid JSON object in this exact format, no other text:
+{"result": "real" or "fake", "confidence": number between 0 and 1, "reasoning": "brief explanation"}`
           },
-        }),
-      }
-    )
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Analyze this image. Is it a real photograph or AI-generated/manipulated (deepfake)? Respond with ONLY the JSON object.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mimeType};base64,${base64Data}`,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    })
 
-    if (!hfResponse.ok) {
-      let errorText = ''
-      try {
-        errorText = await hfResponse.text()
-      } catch (_) {
-        errorText = 'Could not read error response'
-      }
-      console.error('HuggingFace API error:', hfResponse.status, errorText)
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text()
+      console.error('AI API error:', aiResponse.status, errorText)
 
-      if (hfResponse.status === 503) {
-        return new Response(JSON.stringify({ error: 'Model is loading, please try again in ~20 seconds' }), {
-          status: 503,
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded, please try again later' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: 'AI credits exhausted' }), {
+          status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
-      return new Response(JSON.stringify({ error: `API error: ${hfResponse.status}` }), {
+      return new Response(JSON.stringify({ error: `AI analysis failed: ${aiResponse.status}` }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    let classifications
+    const aiData = await aiResponse.json()
+    const content = aiData.choices?.[0]?.message?.content || ''
+    console.log('AI response content:', content)
+
+    // Parse JSON from the response (handle markdown code blocks)
+    let parsed
     try {
-      classifications = await hfResponse.json()
+      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+      parsed = JSON.parse(jsonStr)
     } catch (e) {
-      console.error('Failed to parse HF response:', e)
-      return new Response(JSON.stringify({ error: 'Failed to parse model response' }), {
+      console.error('Failed to parse AI response as JSON:', content)
+      return new Response(JSON.stringify({ error: 'Failed to parse analysis result' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    console.log('HF response:', JSON.stringify(classifications))
 
-    // The model returns an array of arrays: [[{label, score}, ...]]
-    const results = Array.isArray(classifications[0]) ? classifications[0] : classifications
-    
-    // Find the top label - model uses "AI" for fake and "Real" for real
-    const topResult = results.reduce((best: any, item: any) =>
-      item.score > best.score ? item : best, results[0])
-
-    const isFake = topResult.label.toLowerCase() === 'ai' || topResult.label.toLowerCase() === 'fake'
+    const result = parsed.result === 'fake' ? 'fake' : 'real'
+    const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5
 
     return new Response(JSON.stringify({
-      result: isFake ? 'fake' : 'real',
-      confidence: topResult.score,
+      result,
+      confidence,
+      reasoning: parsed.reasoning || '',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
