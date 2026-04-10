@@ -1,3 +1,5 @@
+import { decode as decodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -27,8 +29,8 @@ Deno.serve(async (req) => {
     }
 
     // Strip data URL prefix if present
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
-    const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0))
+    const base64Data = image.replace(/^data:image\/[a-zA-Z+]+;base64,/, '')
+    const binaryData = decodeBase64(base64Data)
 
     const hfResponse = await fetch(
       'https://router.huggingface.co/hf-inference/models/buildborderless/CommunityForensics-DeepfakeDet-ViT',
