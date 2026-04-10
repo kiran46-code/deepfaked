@@ -1,4 +1,4 @@
-import { decode as decodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+import { decodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +20,6 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('HUGGINGFACE_API_KEY')
-    console.log('API key present:', !!apiKey)
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'HuggingFace API key not configured' }), {
         status: 500,
