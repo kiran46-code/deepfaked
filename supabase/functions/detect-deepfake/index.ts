@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('HUGGINGFACE_API_KEY')
-    console.log('API key present:', !!apiKey, 'length:', apiKey?.length, 'starts with hf_:', apiKey?.startsWith('hf_'))
+    console.log('API key present:', !!apiKey)
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'HuggingFace API key not configured' }), {
         status: 500,
