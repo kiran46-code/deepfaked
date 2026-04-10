@@ -29,7 +29,6 @@ Deno.serve(async (req) => {
 
     // Strip data URL prefix if present
     const base64Data = image.replace(/^data:image\/[a-zA-Z+]+;base64,/, '')
-    const binaryData = decodeBase64(base64Data)
 
     const hfResponse = await fetch(
       'https://router.huggingface.co/hf-inference/models/buildborderless/CommunityForensics-DeepfakeDet-ViT',
@@ -37,9 +36,14 @@ Deno.serve(async (req) => {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/octet-stream',
+          'Content-Type': 'application/json',
         },
-        body: binaryData,
+        body: JSON.stringify({
+          inputs: base64Data,
+          parameters: {
+            image_processor_size: 384,
+          },
+        }),
       }
     )
 
