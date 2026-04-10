@@ -42,7 +42,12 @@ Deno.serve(async (req) => {
     )
 
     if (!hfResponse.ok) {
-      const errorText = await hfResponse.text()
+      let errorText = ''
+      try {
+        errorText = await hfResponse.text()
+      } catch (_) {
+        errorText = 'Could not read error response'
+      }
       console.error('HuggingFace API error:', hfResponse.status, errorText)
 
       if (hfResponse.status === 503) {
@@ -58,7 +63,16 @@ Deno.serve(async (req) => {
       })
     }
 
-    const classifications = await hfResponse.json()
+    let classifications
+    try {
+      classifications = await hfResponse.json()
+    } catch (e) {
+      console.error('Failed to parse HF response:', e)
+      return new Response(JSON.stringify({ error: 'Failed to parse model response' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
     console.log('HF response:', JSON.stringify(classifications))
 
     // The model returns an array of arrays: [[{label, score}, ...]]
