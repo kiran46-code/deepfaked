@@ -1,4 +1,4 @@
-import { ShieldCheck, Cpu, Zap, Eye } from "lucide-react";
+import { ShieldCheck, Cpu, Zap, Eye, FileSearch } from "lucide-react";
 import DetectorPanel from "@/components/DetectorPanel";
 import AnalysisHistory from "@/components/AnalysisHistory";
 import { useAnalysisHistory } from "@/hooks/useAnalysisHistory";
@@ -8,6 +8,11 @@ const features = [
     icon: Cpu,
     title: "AI Vision Model",
     desc: "Advanced multimodal AI for accurate deepfake detection",
+  },
+  {
+    icon: FileSearch,
+    title: "EXIF Metadata Scan",
+    desc: "Analyzes image metadata — missing EXIF data lowers confidence",
   },
   {
     icon: Eye,
@@ -62,7 +67,7 @@ const Index = () => {
         <AnalysisHistory history={history} onClear={clearHistory} />
 
         {/* Features */}
-        <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
             <div
               key={f.title}
