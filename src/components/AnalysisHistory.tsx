@@ -1,4 +1,4 @@
-import { History, Trash2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { History, Trash2, ShieldCheck, ShieldAlert, Camera, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AnalysisRecord } from "@/hooks/useAnalysisHistory";
 
@@ -57,6 +57,19 @@ const AnalysisHistory = ({ history, onClear }: Props) => {
                 <span className="text-xs text-muted-foreground">
                   {record.confidence}%
                 </span>
+                {record.metadataReport && (
+                  record.metadataReport.metadataPresent ? (
+                    <span className="flex items-center gap-1 text-[10px] text-success bg-success/10 px-1.5 py-0.5 rounded-full">
+                      <Camera className="h-2.5 w-2.5" />
+                      EXIF
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      No EXIF
+                    </span>
+                  )
+                )}
               </div>
               {record.reasoning && (
                 <p className="text-xs text-muted-foreground truncate mt-0.5">
