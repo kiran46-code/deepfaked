@@ -10,7 +10,29 @@ import ResultDisplay from "./ResultDisplay";
 type DetectionResult = { result: "real" | "fake"; confidence: number; reasoning?: string } | null;
 type Status = "idle" | "uploaded" | "scanning" | "done";
 
-const DetectorPanel = () => {
+interface DetectorPanelProps {
+  onResult?: (record: { result: "real" | "fake"; confidence: number; reasoning?: string; thumbnail: string }) => void;
+}
+
+function createThumbnail(dataUrl: string, size = 96): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d")!;
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      resolve(canvas.toDataURL("image/jpeg", 0.6));
+    };
+    img.src = dataUrl;
+  });
+}
+
+const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
   const [status, setStatus] = useState<Status>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [detection, setDetection] = useState<DetectionResult>(null);
@@ -46,18 +68,26 @@ const DetectorPanel = () => {
         return;
       }
 
-      setDetection({
-        result: data.result,
-        confidence: data.confidence,
-        reasoning: data.reasoning,
-      });
+      const result = {
+        result: data.result as "real" | "fake",
+        confidence: data.confidence as number,
+        reasoning: data.reasoning as string | undefined,
+      };
+
+      setDetection(result);
       setStatus("done");
+
+      // Save to history
+      if (onResult && fileDataUrl.current) {
+        const thumbnail = await createThumbnail(fileDataUrl.current);
+        onResult({ ...result, thumbnail });
+      }
     } catch (err) {
       console.error("Unexpected error:", err);
       toast.error("Something went wrong. Please try again.");
       setStatus("uploaded");
     }
-  }, []);
+  }, [onResult]);
 
   const handleReset = useCallback(() => {
     setStatus("idle");
