@@ -14,6 +14,7 @@ type DetectionResult = {
   confidence: number;
   reasoning?: string;
   metadataReport?: MetadataReport;
+  scores?: Record<string, number>;
 } | null;
 type Status = "idle" | "uploaded" | "scanning" | "done";
 
@@ -109,6 +110,7 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
         confidence: data.confidence as number,
         reasoning: data.reasoning as string | undefined,
         metadataReport: data.metadataReport as MetadataReport | undefined,
+        scores: data.scores as Record<string, number> | undefined,
       };
 
       setDetection(result);
@@ -173,6 +175,7 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
             result={detection.result}
             confidence={detection.confidence}
             metadataReport={detection.metadataReport}
+            scores={detection.scores}
           />
           {detection.reasoning && (
             <div className="rounded-lg border border-border bg-muted/30 p-4">
