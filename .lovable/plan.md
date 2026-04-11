@@ -1,19 +1,41 @@
 
 
-# Test Deepfake Detector with AI-Generated Image
+## Integrate Real Deepfake Detection via HuggingFace Inference API
 
-## Approach
-1. Use the AI Gateway script to generate a synthetic face image
-2. Base64-encode the generated image
-3. Send it to the `detect-deepfake` edge function via curl
-4. Verify the function returns `result: "fake"` with reasonable confidence
+### Context
+The model `buildborderless/CommunityForensics-DeepfakeDet-ViT` is MIT-licensed and free. It's a PyTorch ViT model — too heavy for browser execution. The best approach for a Lovable project is to call the **HuggingFace Inference API**, which hosts many models for free (rate-limited).
 
-## Steps
-1. **Copy AI gateway script** to `/tmp/lovable_ai.py`
-2. **Generate an AI face** using `google/gemini-3-pro-image-preview` with a prompt like "A photorealistic portrait of a person, studio lighting"
-3. **Base64-encode** the output image
-4. **Call the edge function** with `supabase--curl_edge_functions` passing the base64 image
-5. **Report results** — whether it was detected as fake, confidence level, and reasoning
+### Approach
+Use a Supabase Edge Function as a proxy to call the HuggingFace Inference API with the uploaded image, then return the real/fake classification to the frontend.
 
-No code changes needed — this is a pure testing task.
+### Steps
+
+1. **Store HuggingFace API token as a secret**
+   - User provides a free HuggingFace API token (from huggingface.co/settings/tokens)
+   - Store it via secrets tool as `HUGGINGFACE_API_KEY`
+
+2. **Create edge function `detect-deepfake`**
+   - Receives base64 image from frontend
+   - Calls `https://api-inference.huggingface.co/models/buildborderless/CommunityForensics-DeepfakeDet-ViT` with the image binary
+   - Parses the classification response (returns labels + scores)
+   - Returns `{ result: "real" | "fake", confidence: number }`
+
+3. **Update `DetectorPanel.tsx`**
+   - Replace the simulated `setTimeout` logic with a real `supabase.functions.invoke("detect-deepfake", { body: { image } })` call
+   - Convert the uploaded file to base64 and send it
+   - Map the HuggingFace response to the existing `DetectionResult` type
+
+4. **Error handling & loading states**
+   - Handle model cold-start (HF free tier can take ~20s on first call)
+   - Show appropriate messages for API errors or rate limits
+   - Keep the scanning animation during the real API call
+
+### Technical Details
+- HuggingFace free Inference API: rate-limited but no cost
+- The model returns classification labels like `"AI"` / `"Real"` with confidence scores
+- Edge function handles CORS and JWT validation
+- No changes needed to `ResultDisplay` or `ScanningOverlay` — they already support the result format
+
+### What's Needed from You
+- A free HuggingFace account and API token (I'll guide you through getting one)
 

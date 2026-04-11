@@ -96,7 +96,3 @@ All colors MUST be HSL.
   0%, 100% { opacity: 0.03; }
   50% { opacity: 0.08; }
 }
-
-@keyframes bar-fill {
-  from { width: 0%; }
-}

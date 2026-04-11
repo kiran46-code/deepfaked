@@ -132,12 +132,17 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
 
       {status === "done" && detection && (
         <>
-          <ResultDisplay result={detection.result} confidence={detection.confidence} reasoning={detection.reasoning} />
+          <ResultDisplay result={detection.result} confidence={detection.confidence} />
+          {detection.reasoning && (
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Analysis Details</p>
+              <p className="text-sm text-foreground">{detection.reasoning}</p>
+            </div>
+          )}
           <Button
             variant="outline"
             onClick={handleReset}
-            className="w-full gap-2 h-11 border-border text-foreground hover:bg-muted animate-fade-in"
-            style={{ animationDelay: "0.6s", animationFillMode: "backwards" }}
+            className="w-full gap-2 h-11 border-border text-foreground hover:bg-muted"
           >
             <RotateCcw className="h-4 w-4" />
             Analyze Another Image
