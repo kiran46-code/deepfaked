@@ -1,29 +1,40 @@
 
 
-# Generate Comprehensive README.md
+# Fix Deepfake Detection Accuracy
 
-## What We'll Create
-A detailed, professional README.md for the DeepFake Detector project covering architecture, tech stack, project structure, flowcharts (as Mermaid diagrams), features, and setup instructions.
+## Overview
+Five changes: new forensic prompt, updated user message, refined EXIF confidence logic, JSON retry, and scored category badges in the UI.
 
-## Sections
+## Changes
 
-1. **Title & Badges** — Project name, live URL, tech stack badges
-2. **Overview** — What the app does, key capabilities
-3. **Features** — AI vision analysis, EXIF metadata scanning, analysis history, scanning animation
-4. **Tech Stack** — React 18, Vite 5, TypeScript, Tailwind CSS, shadcn/ui, Lovable Cloud (Edge Functions), ExifReader, Gemini 2.5 Flash
-5. **Architecture Flowchart** — Mermaid diagram showing the detection pipeline:
-   - Upload → Client-side EXIF extraction → Edge Function → AI Vision API → Metadata logic → Result
-6. **Project Structure** — Tree of key directories and files with descriptions
-7. **Component Diagram** — Mermaid diagram showing component hierarchy (App → Index → DetectorPanel → ImageUploader/ScanningOverlay/ResultDisplay, AnalysisHistory)
-8. **How It Works** — Step-by-step explanation of the detection logic including the confidence capping mechanism
-9. **Getting Started** — Prerequisites, install, run locally
-10. **Disclaimer** — Advisory-only results notice
+### 1. Edge Function (`supabase/functions/detect-deepfake/index.ts`)
 
-## Technical Details
-- README will be written directly to `/README.md` in the project root
-- Mermaid diagrams will be inline in the markdown (GitHub renders them natively)
-- No external files needed — everything in one README
+- **Replace system prompt** with the detailed 10-area forensic scoring prompt
+- **Replace user message** with the new directive about non-person images
+- **Update JSON parsing** to also extract `scores` from the response
+- **New confidence logic** replacing the hard 59% cap:
+  - EXIF missing + real → `confidence -= 0.1` (min 0.3)
+  - EXIF missing + fake → `confidence += 0.05` (max 0.95)
+  - EXIF present with camera data + real → `confidence += 0.1` (max 0.95)
+- **Retry logic**: wrap the AI fetch + parse in a loop (max 2 attempts). If JSON parse fails on first try, retry once with same payload
+- Return `scores` object in the response alongside existing fields
+
+### 2. ResultDisplay (`src/components/ResultDisplay.tsx`)
+
+- Accept optional `scores` prop (`Record<string, number>`)
+- Render a flex-wrap grid of small badges below the verdict card
+- Color coding: green (0–3), amber (4–6), red (7–10), gray (-1/N/A)
+- Each badge shows the area name and score
+
+### 3. DetectorPanel (`src/components/DetectorPanel.tsx`)
+
+- Pass `scores` from the API response through to `ResultDisplay`
+
+### 4. Deploy
+- Redeploy the `detect-deepfake` edge function
 
 ## Files Modified
-- `README.md` — complete rewrite
+- `supabase/functions/detect-deepfake/index.ts`
+- `src/components/ResultDisplay.tsx`
+- `src/components/DetectorPanel.tsx`
 
