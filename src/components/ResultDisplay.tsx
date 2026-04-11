@@ -64,6 +64,13 @@ const ResultDisplay = ({ result, confidence }: ResultDisplayProps) => {
           {percentage}%
         </span>
       </div>
+
+      <div className="mt-4 flex items-start gap-2 rounded-lg border border-muted/40 bg-muted/10 p-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          This analysis is an AI-powered estimate and may not be fully accurate. Modern AI-generated images can be highly realistic and may not be detected. Do not rely solely on this tool for verification.
+        </p>
+      </div>
     </div>
   );
 };
