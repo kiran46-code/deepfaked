@@ -1,16 +1,18 @@
 import { ShieldCheck, Cpu, Zap, Eye } from "lucide-react";
 import DetectorPanel from "@/components/DetectorPanel";
+import AnalysisHistory from "@/components/AnalysisHistory";
+import { useAnalysisHistory } from "@/hooks/useAnalysisHistory";
 
 const features = [
   {
     icon: Cpu,
-    title: "EfficientNet B4",
-    desc: "State-of-the-art deep learning architecture for accurate detection",
+    title: "AI Vision Model",
+    desc: "Advanced multimodal AI for accurate deepfake detection",
   },
   {
     icon: Eye,
-    title: "Face Detection",
-    desc: "BlazeFace-powered face extraction for precise analysis",
+    title: "Artifact Detection",
+    desc: "Identifies subtle manipulation artifacts and inconsistencies",
   },
   {
     icon: Zap,
@@ -20,6 +22,8 @@ const features = [
 ];
 
 const Index = () => {
+  const { history, addRecord, clearHistory } = useAnalysisHistory();
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background grid */}
@@ -52,7 +56,10 @@ const Index = () => {
         </p>
 
         {/* Detector */}
-        <DetectorPanel />
+        <DetectorPanel onResult={addRecord} />
+
+        {/* History */}
+        <AnalysisHistory history={history} onClear={clearHistory} />
 
         {/* Features */}
         <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
@@ -69,7 +76,7 @@ const Index = () => {
         </div>
 
         <p className="mt-16 text-xs text-muted-foreground/60">
-          Demo mode · Detection results are simulated
+          Powered by AI vision models · Results are advisory only
         </p>
       </div>
     </div>
