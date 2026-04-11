@@ -84,8 +84,10 @@ flowchart TD
     A[User Uploads Image] --> B[Client: Preview Image]
     B --> C[Client: Extract EXIF Metadata]
     C --> D{EXIF Data Found?}
-    D -->|Yes| E[Send Image + Metadata to Edge Function]
-    D -->|No| E
+    D -->|Yes| E1[Attach EXIF Data]
+    D -->|No| E2[Proceed without EXIF]
+    E1 --> E[Send Request to Edge Function]
+    E2 --> E
     E --> F[Edge Function: AI Vision Analysis]
     F --> G[Gemini 2.5 Flash]
     G --> H[Parse AI Response]
@@ -216,9 +218,6 @@ The following variables are automatically configured by Lovable Cloud:
 
 -----
 
-\<div align="center"\>
-\<p\>Built by Kiran · Powered by AI vision models\</p\>
-\</div\>
-
-```
-```
+<div align="center"\>
+<p\>Built by Kiran · Powered by AI vision models\</p\>
+</div\>
