@@ -1,4 +1,4 @@
-import { ShieldCheck, ShieldAlert, BarChart3 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, BarChart3, Info } from "lucide-react";
 
 interface ResultDisplayProps {
   result: "real" | "fake";
