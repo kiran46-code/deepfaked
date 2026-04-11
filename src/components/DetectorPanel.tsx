@@ -109,6 +109,7 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
         confidence: data.confidence as number,
         reasoning: data.reasoning as string | undefined,
         metadataReport: data.metadataReport as MetadataReport | undefined,
+        scores: data.scores as Record<string, number> | undefined,
       };
 
       setDetection(result);

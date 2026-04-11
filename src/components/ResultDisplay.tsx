@@ -14,9 +14,30 @@ interface ResultDisplayProps {
   result: "real" | "fake";
   confidence: number;
   metadataReport?: MetadataReport;
+  scores?: Record<string, number>;
 }
 
-const ResultDisplay = ({ result, confidence, metadataReport }: ResultDisplayProps) => {
+const SCORE_LABELS: Record<string, string> = {
+  skin_texture: "Skin",
+  hair: "Hair",
+  eyes: "Eyes",
+  teeth_mouth: "Teeth/Mouth",
+  hands_fingers: "Hands",
+  background: "Background",
+  lighting: "Lighting",
+  edge_boundaries: "Edges",
+  symmetry: "Symmetry",
+  textures: "Textures",
+};
+
+function getScoreBadgeClasses(score: number): string {
+  if (score === -1) return "bg-muted text-muted-foreground";
+  if (score <= 3) return "bg-success/15 text-success";
+  if (score <= 6) return "bg-amber-500/15 text-amber-500";
+  return "bg-destructive/15 text-destructive";
+}
+
+const ResultDisplay = ({ result, confidence, metadataReport, scores }: ResultDisplayProps) => {
   const isReal = result === "real";
   const percentage = Math.round(confidence * 100);
 
@@ -84,6 +105,24 @@ const ResultDisplay = ({ result, confidence, metadataReport }: ResultDisplayProp
           </p>
         </div>
       </div>
+
+      {/* Forensic Scores */}
+      {scores && Object.keys(scores).length > 0 && (
+        <div className="rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Forensic Area Scores</h4>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(scores).map(([key, score]) => (
+              <span
+                key={key}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getScoreBadgeClasses(score)}`}
+              >
+                {SCORE_LABELS[key] || key}
+                <span className="font-mono font-bold">{score === -1 ? "N/A" : score}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Metadata Analysis Section */}
       {metadataReport && (
