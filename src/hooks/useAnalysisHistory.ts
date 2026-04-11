@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import type { MetadataReport } from "@/components/ResultDisplay";
 
 export interface AnalysisRecord {
   id: string;
@@ -6,7 +7,8 @@ export interface AnalysisRecord {
   result: "real" | "fake";
   confidence: number;
   reasoning?: string;
-  thumbnail: string; // small base64 thumbnail
+  metadataReport?: MetadataReport;
+  thumbnail: string;
 }
 
 const STORAGE_KEY = "deepfake-analysis-history";

@@ -3,15 +3,28 @@ import { ScanSearch, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ExifReader from "exifreader";
 import ImageUploader from "./ImageUploader";
 import ScanningOverlay from "./ScanningOverlay";
 import ResultDisplay from "./ResultDisplay";
+import type { MetadataReport } from "./ResultDisplay";
 
-type DetectionResult = { result: "real" | "fake"; confidence: number; reasoning?: string } | null;
+type DetectionResult = {
+  result: "real" | "fake";
+  confidence: number;
+  reasoning?: string;
+  metadataReport?: MetadataReport;
+} | null;
 type Status = "idle" | "uploaded" | "scanning" | "done";
 
 interface DetectorPanelProps {
-  onResult?: (record: { result: "real" | "fake"; confidence: number; reasoning?: string; thumbnail: string }) => void;
+  onResult?: (record: {
+    result: "real" | "fake";
+    confidence: number;
+    reasoning?: string;
+    metadataReport?: MetadataReport;
+    thumbnail: string;
+  }) => void;
 }
 
 function createThumbnail(dataUrl: string, size = 96): Promise<string> {
@@ -32,26 +45,49 @@ function createThumbnail(dataUrl: string, size = 96): Promise<string> {
   });
 }
 
+async function extractMetadata(file: File) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const tags = ExifReader.load(arrayBuffer);
+
+    const cameraMake = tags["Make"]?.description;
+    const cameraModel = tags["Model"]?.description;
+    const dateTaken = tags["DateTimeOriginal"]?.description || tags["DateTime"]?.description;
+    const software = tags["Software"]?.description;
+    const gps = !!(tags["GPSLatitude"] || tags["GPSLongitude"]);
+
+    const hasExif = !!(cameraMake || cameraModel || dateTaken || software || gps);
+
+    return { cameraMake, cameraModel, dateTaken, software, gps, hasExif };
+  } catch {
+    return { hasExif: false, gps: false };
+  }
+}
+
 const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
   const [status, setStatus] = useState<Status>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [detection, setDetection] = useState<DetectionResult>(null);
   const fileDataUrl = useRef<string | null>(null);
+  const fileRef = useRef<File | null>(null);
 
-  const handleImageUpload = useCallback((_file: File, dataUrl: string) => {
+  const handleImageUpload = useCallback((file: File, dataUrl: string) => {
     setPreview(dataUrl);
     fileDataUrl.current = dataUrl;
+    fileRef.current = file;
     setStatus("uploaded");
     setDetection(null);
   }, []);
 
   const handleScan = useCallback(async () => {
-    if (!fileDataUrl.current) return;
+    if (!fileDataUrl.current || !fileRef.current) return;
     setStatus("scanning");
 
     try {
+      const metadata = await extractMetadata(fileRef.current);
+
       const { data, error } = await supabase.functions.invoke("detect-deepfake", {
-        body: { image: fileDataUrl.current },
+        body: { image: fileDataUrl.current, metadata },
       });
 
       if (error) {
@@ -72,12 +108,12 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
         result: data.result as "real" | "fake",
         confidence: data.confidence as number,
         reasoning: data.reasoning as string | undefined,
+        metadataReport: data.metadataReport as MetadataReport | undefined,
       };
 
       setDetection(result);
       setStatus("done");
 
-      // Save to history
       if (onResult && fileDataUrl.current) {
         const thumbnail = await createThumbnail(fileDataUrl.current);
         onResult({ ...result, thumbnail });
@@ -94,6 +130,7 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
     setPreview(null);
     setDetection(null);
     fileDataUrl.current = null;
+    fileRef.current = null;
   }, []);
 
   return (
@@ -132,7 +169,11 @@ const DetectorPanel = ({ onResult }: DetectorPanelProps) => {
 
       {status === "done" && detection && (
         <>
-          <ResultDisplay result={detection.result} confidence={detection.confidence} />
+          <ResultDisplay
+            result={detection.result}
+            confidence={detection.confidence}
+            metadataReport={detection.metadataReport}
+          />
           {detection.reasoning && (
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <p className="text-xs font-medium text-muted-foreground mb-1">Analysis Details</p>

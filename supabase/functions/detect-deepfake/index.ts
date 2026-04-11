@@ -3,13 +3,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface MetadataSummary {
+  cameraMake?: string;
+  cameraModel?: string;
+  dateTaken?: string;
+  software?: string;
+  gps?: boolean;
+  hasExif: boolean;
+}
+
+interface MetadataReport {
+  cameraMake?: string;
+  cameraModel?: string;
+  dateTaken?: string;
+  software?: string;
+  hasGps: boolean;
+  hasExif: boolean;
+  metadataPresent: boolean;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { image } = await req.json()
+    const { image, metadata } = await req.json()
     if (!image || typeof image !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing image data' }), {
         status: 400,
@@ -25,9 +44,20 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Build metadata report
+    const meta = (metadata || {}) as MetadataSummary
+    const metadataReport: MetadataReport = {
+      cameraMake: meta.cameraMake,
+      cameraModel: meta.cameraModel,
+      dateTaken: meta.dateTaken,
+      software: meta.software,
+      hasGps: !!meta.gps,
+      hasExif: !!meta.hasExif,
+      metadataPresent: !!(meta.cameraMake || meta.cameraModel || meta.dateTaken || meta.gps),
+    }
+
     // Strip data URL prefix to get just base64
     const base64Data = image.replace(/^data:image\/[a-zA-Z+]+;base64,/, '')
-    // Detect mime type from data URL
     const mimeMatch = image.match(/^data:(image\/[a-zA-Z+]+);base64,/)
     const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg'
 
@@ -104,7 +134,6 @@ You MUST respond with ONLY a valid JSON object in this exact format, no other te
     const content = aiData.choices?.[0]?.message?.content || ''
     console.log('AI response content:', content)
 
-    // Parse JSON from the response (handle markdown code blocks)
     let parsed
     try {
       const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -117,13 +146,27 @@ You MUST respond with ONLY a valid JSON object in this exact format, no other te
       })
     }
 
-    const result = parsed.result === 'fake' ? 'fake' : 'real'
-    const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5
+    let result = parsed.result === 'fake' ? 'fake' : 'real'
+    let confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.5
+    let reasoning = parsed.reasoning || ''
+
+    // Apply metadata logic: if no meaningful metadata and AI says "real", cap confidence at 0.59
+    if (!metadataReport.metadataPresent) {
+      if (result === 'real' && confidence > 0.59) {
+        confidence = 0.59
+        reasoning += ' [Confidence capped: no EXIF metadata found — common in AI-generated images]'
+      }
+      // If already fake, just note it
+      if (result === 'fake') {
+        reasoning += ' [No EXIF metadata found, reinforcing suspicion]'
+      }
+    }
 
     return new Response(JSON.stringify({
       result,
       confidence,
-      reasoning: parsed.reasoning || '',
+      reasoning,
+      metadataReport,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
