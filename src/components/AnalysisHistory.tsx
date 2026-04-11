@@ -89,7 +89,7 @@ const AnalysisHistory = ({ history, onClear }: Props) => {
                 <div className="px-3 pb-4 pt-1 border-t border-border/50 animate-fade-in">
                   <ResultDisplay
                     result={record.result}
-                    confidence={record.confidence / 100}
+                    confidence={record.confidence}
                     reasoning={record.reasoning}
                   />
                 </div>
