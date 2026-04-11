@@ -65,7 +65,7 @@ const AnalysisHistory = ({ history, onClear }: Props) => {
                       {record.result === "real" ? "Authentic" : "Deepfake Detected"}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {record.confidence}%
+                      {Math.round(record.confidence * 100)}%
                     </span>
                   </div>
                   {!isExpanded && record.reasoning && (
