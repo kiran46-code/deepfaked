@@ -1,60 +1,29 @@
 
 
-# Add EXIF Metadata Scanning to Deepfake Detection
+# Generate Comprehensive README.md
 
-## Overview
-Extract EXIF metadata from uploaded images on the frontend before sending to the edge function. If metadata is missing or stripped (a common sign of AI-generated images), cap the confidence score below 60% regardless of the AI visual analysis result.
+## What We'll Create
+A detailed, professional README.md for the DeepFake Detector project covering architecture, tech stack, project structure, flowcharts (as Mermaid diagrams), features, and setup instructions.
 
-## How It Works
+## Sections
 
-```text
-Upload Image
-    │
-    ├── Extract EXIF metadata (client-side)
-    │     • Camera make/model
-    │     • Date taken
-    │     • GPS coordinates
-    │     • Software used
-    │
-    ├── Send image + metadata summary to edge function
-    │
-    └── Edge function:
-          1. AI visual analysis (existing)
-          2. Check metadata flags
-          3. If no meaningful metadata → cap confidence ≤ 0.59
-          4. Return result + metadata report
-```
-
-## Steps
-
-### 1. Add EXIF parsing library
-Install `exifreader` (lightweight, browser-compatible EXIF parser) to extract metadata from the uploaded image file.
-
-### 2. Update `DetectorPanel.tsx`
-- Parse EXIF data from the raw `File` object before sending to the edge function
-- Extract key fields: camera make/model, date, GPS, software, image dimensions from EXIF
-- Send a `metadata` object alongside the `image` to the edge function
-
-### 3. Update edge function `detect-deepfake/index.ts`
-- Accept the new `metadata` field from the request body
-- After getting the AI visual analysis result, apply metadata logic:
-  - If metadata has camera info, date, or GPS → boost credibility (keep AI score as-is)
-  - If metadata is empty/missing → cap confidence at max 0.59 and append a note to reasoning
-- Include a `metadataReport` in the response with what was found/missing
-
-### 4. Update `ResultDisplay.tsx`
-- Add a new "Metadata Analysis" section showing:
-  - Camera info (if found)
-  - Date taken (if found)
-  - Software used (if found)
-  - A warning badge if no metadata was detected
-- Display metadata status with a color-coded indicator (green = present, red = missing)
-
-### 5. Update types
-- Extend `DetectionResult` and history records to include `metadataReport`
+1. **Title & Badges** — Project name, live URL, tech stack badges
+2. **Overview** — What the app does, key capabilities
+3. **Features** — AI vision analysis, EXIF metadata scanning, analysis history, scanning animation
+4. **Tech Stack** — React 18, Vite 5, TypeScript, Tailwind CSS, shadcn/ui, Lovable Cloud (Edge Functions), ExifReader, Gemini 2.5 Flash
+5. **Architecture Flowchart** — Mermaid diagram showing the detection pipeline:
+   - Upload → Client-side EXIF extraction → Edge Function → AI Vision API → Metadata logic → Result
+6. **Project Structure** — Tree of key directories and files with descriptions
+7. **Component Diagram** — Mermaid diagram showing component hierarchy (App → Index → DetectorPanel → ImageUploader/ScanningOverlay/ResultDisplay, AnalysisHistory)
+8. **How It Works** — Step-by-step explanation of the detection logic including the confidence capping mechanism
+9. **Getting Started** — Prerequisites, install, run locally
+10. **Disclaimer** — Advisory-only results notice
 
 ## Technical Details
-- `exifreader` reads EXIF, IPTC, and XMP data from JPEG/TIFF/PNG files directly in the browser via `ArrayBuffer`
-- AI-generated images typically have no EXIF data or only software tags (e.g., "Adobe Firefly", "DALL-E")
-- The confidence cap of 0.59 (< 60%) applies when the AI says "real" but metadata is absent — if the AI already says "fake", the low metadata just reinforces it
+- README will be written directly to `/README.md` in the project root
+- Mermaid diagrams will be inline in the markdown (GitHub renders them natively)
+- No external files needed — everything in one README
+
+## Files Modified
+- `README.md` — complete rewrite
 
