@@ -1,5 +1,7 @@
-import { History, Trash2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { useState } from "react";
+import { History, Trash2, ShieldCheck, ShieldAlert, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ResultDisplay from "./ResultDisplay";
 import type { AnalysisRecord } from "@/hooks/useAnalysisHistory";
 
 interface Props {
@@ -8,7 +10,11 @@ interface Props {
 }
 
 const AnalysisHistory = ({ history, onClear }: Props) => {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   if (history.length === 0) return null;
+
+  const toggle = (id: string) => setExpandedId((prev) => (prev === id ? null : id));
 
   return (
     <div className="mx-auto w-full max-w-2xl mt-12">
@@ -30,45 +36,67 @@ const AnalysisHistory = ({ history, onClear }: Props) => {
       </div>
 
       <div className="space-y-2">
-        {history.map((record) => (
-          <div
-            key={record.id}
-            className="flex items-center gap-3 rounded-lg border border-border bg-card/50 p-3 backdrop-blur-sm"
-          >
-            <img
-              src={record.thumbnail}
-              alt="Analyzed"
-              className="h-12 w-12 rounded-md object-cover bg-muted flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                {record.result === "real" ? (
-                  <ShieldCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+        {history.map((record) => {
+          const isExpanded = expandedId === record.id;
+          return (
+            <div key={record.id} className="rounded-lg border border-border bg-card/50 backdrop-blur-sm overflow-hidden transition-all">
+              {/* Summary row */}
+              <button
+                onClick={() => toggle(record.id)}
+                className="flex items-center gap-3 p-3 w-full text-left hover:bg-muted/30 transition-colors cursor-pointer"
+              >
+                <img
+                  src={record.thumbnail}
+                  alt="Analyzed"
+                  className="h-12 w-12 rounded-md object-cover bg-muted flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {record.result === "real" ? (
+                      <ShieldCheck className="h-4 w-4 text-success flex-shrink-0" />
+                    ) : (
+                      <ShieldAlert className="h-4 w-4 text-destructive flex-shrink-0" />
+                    )}
+                    <span
+                      className={`text-sm font-semibold ${
+                        record.result === "real" ? "text-success" : "text-destructive"
+                      }`}
+                    >
+                      {record.result === "real" ? "Authentic" : "Deepfake Detected"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {record.confidence}%
+                    </span>
+                  </div>
+                  {!isExpanded && record.reasoning && (
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {record.reasoning}
+                    </p>
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground/60 flex-shrink-0 mr-1">
+                  {new Date(record.timestamp).toLocaleDateString()}
+                </span>
+                {isExpanded ? (
+                  <X className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 ) : (
-                  <ShieldAlert className="h-4 w-4 text-red-500 flex-shrink-0" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 )}
-                <span
-                  className={`text-sm font-semibold ${
-                    record.result === "real" ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {record.result === "real" ? "Authentic" : "Deepfake Detected"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {record.confidence}%
-                </span>
-              </div>
-              {record.reasoning && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {record.reasoning}
-                </p>
+              </button>
+
+              {/* Expanded detail */}
+              {isExpanded && (
+                <div className="px-3 pb-4 pt-1 border-t border-border/50 animate-fade-in">
+                  <ResultDisplay
+                    result={record.result}
+                    confidence={record.confidence / 100}
+                    reasoning={record.reasoning}
+                  />
+                </div>
               )}
             </div>
-            <span className="text-[10px] text-muted-foreground/60 flex-shrink-0">
-              {new Date(record.timestamp).toLocaleDateString()}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
