@@ -101,17 +101,28 @@ export function useAnalysisHistory() {
 
   const addRecord = useCallback(
     async (record: Omit<AnalysisRecord, "id" | "timestamp">) => {
-      if (!user) return;
+      if (!user) {
+        console.warn("[useAnalysisHistory] addRecord called without a signed-in user — skipping");
+        return;
+      }
 
       // Upload thumbnail to storage (record.thumbnail is a base64 data URL from DetectorPanel)
-      const blob = dataUrlToBlob(record.thumbnail);
+      let blob: Blob;
+      try {
+        blob = dataUrlToBlob(record.thumbnail);
+      } catch (e) {
+        console.error("[useAnalysisHistory] Failed to decode thumbnail data URL:", e);
+        return;
+      }
+
       const path = `${user.id}/${crypto.randomUUID()}.jpg`;
+      console.log("[useAnalysisHistory] uploading thumbnail to", path, "size:", blob.size);
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
         .upload(path, blob, { contentType: blob.type, upsert: false });
 
       if (uploadError) {
-        console.error("Failed to upload thumbnail:", uploadError);
+        console.error("[useAnalysisHistory] Failed to upload thumbnail:", uploadError);
         return;
       }
 
@@ -130,11 +141,12 @@ export function useAnalysisHistory() {
         .single();
 
       if (error) {
-        console.error("Failed to save analysis:", error);
+        console.error("[useAnalysisHistory] Failed to save analysis:", error);
         // Best-effort cleanup of orphaned upload
         await supabase.storage.from(BUCKET).remove([path]);
         return;
       }
+      console.log("[useAnalysisHistory] saved analysis", data.id);
       const newRecord = await rowToRecord(data as AnalysesRow);
       setHistory((prev) => [newRecord, ...prev].slice(0, MAX_HISTORY));
     },
