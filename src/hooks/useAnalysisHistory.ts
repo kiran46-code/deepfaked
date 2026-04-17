@@ -11,10 +11,12 @@ export interface AnalysisRecord {
   reasoning?: string;
   metadataReport?: MetadataReport;
   scores?: Record<string, number>;
-  thumbnail: string;
+  thumbnail: string; // resolved URL (signed URL or data URL fallback)
 }
 
 const MAX_HISTORY = 20;
+const BUCKET = "analysis-thumbnails";
+const SIGNED_URL_TTL = 60 * 60; // 1 hour
 
 interface AnalysesRow {
   id: string;
@@ -27,7 +29,30 @@ interface AnalysesRow {
   created_at: string;
 }
 
-function rowToRecord(row: AnalysesRow): AnalysisRecord {
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64] = dataUrl.split(",");
+  const mimeMatch = header.match(/data:(.*?);base64/);
+  const mime = mimeMatch?.[1] ?? "image/jpeg";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+async function resolveThumbnail(thumbnail: string): Promise<string> {
+  // Legacy records stored a base64 data URL — return as-is
+  if (thumbnail.startsWith("data:")) return thumbnail;
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(thumbnail, SIGNED_URL_TTL);
+  if (error || !data?.signedUrl) {
+    console.error("Failed to sign thumbnail URL:", error);
+    return "";
+  }
+  return data.signedUrl;
+}
+
+async function rowToRecord(row: AnalysesRow): Promise<AnalysisRecord> {
   return {
     id: row.id,
     timestamp: new Date(row.created_at).getTime(),
@@ -36,7 +61,7 @@ function rowToRecord(row: AnalysesRow): AnalysisRecord {
     reasoning: row.reasoning ?? undefined,
     metadataReport: (row.metadata_report as MetadataReport | null) ?? undefined,
     scores: (row.scores as Record<string, number> | null) ?? undefined,
-    thumbnail: row.thumbnail,
+    thumbnail: await resolveThumbnail(row.thumbnail),
   };
 }
 
@@ -64,7 +89,8 @@ export function useAnalysisHistory() {
         console.error("Failed to load analysis history:", error);
         setHistory([]);
       } else {
-        setHistory((data ?? []).map(rowToRecord));
+        const records = await Promise.all((data ?? []).map(rowToRecord));
+        if (!cancelled) setHistory(records);
       }
       setLoading(false);
     })();
@@ -76,6 +102,19 @@ export function useAnalysisHistory() {
   const addRecord = useCallback(
     async (record: Omit<AnalysisRecord, "id" | "timestamp">) => {
       if (!user) return;
+
+      // Upload thumbnail to storage (record.thumbnail is a base64 data URL from DetectorPanel)
+      const blob = dataUrlToBlob(record.thumbnail);
+      const path = `${user.id}/${crypto.randomUUID()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, blob, { contentType: blob.type, upsert: false });
+
+      if (uploadError) {
+        console.error("Failed to upload thumbnail:", uploadError);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("analyses")
         .insert([{
@@ -85,22 +124,41 @@ export function useAnalysisHistory() {
           reasoning: record.reasoning ?? null,
           metadata_report: (record.metadataReport ?? null) as never,
           scores: (record.scores ?? null) as never,
-          thumbnail: record.thumbnail,
+          thumbnail: path,
         }])
         .select("id, result, confidence, reasoning, metadata_report, scores, thumbnail, created_at")
         .single();
 
       if (error) {
         console.error("Failed to save analysis:", error);
+        // Best-effort cleanup of orphaned upload
+        await supabase.storage.from(BUCKET).remove([path]);
         return;
       }
-      setHistory((prev) => [rowToRecord(data as AnalysesRow), ...prev].slice(0, MAX_HISTORY));
+      const newRecord = await rowToRecord(data as AnalysesRow);
+      setHistory((prev) => [newRecord, ...prev].slice(0, MAX_HISTORY));
     },
     [user]
   );
 
   const clearHistory = useCallback(async () => {
     if (!user) return;
+
+    // Collect storage paths from current rows so we can remove the files
+    const { data: rows } = await supabase
+      .from("analyses")
+      .select("thumbnail")
+      .eq("user_id", user.id);
+
+    const paths = (rows ?? [])
+      .map((r) => r.thumbnail)
+      .filter((t): t is string => !!t && !t.startsWith("data:"));
+
+    if (paths.length > 0) {
+      const { error: removeError } = await supabase.storage.from(BUCKET).remove(paths);
+      if (removeError) console.error("Failed to remove thumbnail files:", removeError);
+    }
+
     const { error } = await supabase.from("analyses").delete().eq("user_id", user.id);
     if (error) {
       console.error("Failed to clear history:", error);
