@@ -123,7 +123,23 @@ const ResultDisplay = ({ result, confidence, metadataReport, scores }: ResultDis
       {/* Forensic Scores */}
       {scores && Object.keys(scores).length > 0 && (
         <div className="rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm">
-          <h4 className="text-sm font-semibold text-foreground mb-3">Forensic Area Scores</h4>
+          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+            <h4 className="text-sm font-semibold text-foreground">Forensic Area Scores</h4>
+            <div className="flex items-center gap-2 text-[10px] font-medium">
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 text-success px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" /> 0–3 Real
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-500 px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> 4–6 Uncertain
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 text-destructive px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-destructive" /> 7–10 AI
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" /> N/A
+              </span>
+            </div>
+          </div>
           <TooltipProvider delayDuration={150}>
             <div className="flex flex-wrap gap-2">
               {Object.entries(scores).map(([key, score]) => (
