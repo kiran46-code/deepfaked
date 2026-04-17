@@ -30,6 +30,7 @@ const features = [
 
 const Index = () => {
   const { history, addRecord, clearHistory } = useAnalysisHistory();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -46,7 +47,20 @@ const Index = () => {
       {/* Radial glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
 
-      <div className="relative z-10 flex flex-col items-center px-4 py-16 sm:py-24">
+      {/* Top bar */}
+      <div className="relative z-10 flex items-center justify-end gap-3 px-4 pt-4">
+        {user && (
+          <>
+            <span className="text-xs text-muted-foreground hidden sm:inline">{user.email}</span>
+            <Button variant="outline" size="sm" onClick={signOut} className="gap-2">
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </Button>
+          </>
+        )}
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center px-4 py-12 sm:py-16">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
