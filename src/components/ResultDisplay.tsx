@@ -1,4 +1,5 @@
 import { ShieldCheck, ShieldAlert, BarChart3, Info, Camera, Calendar, Monitor, MapPin, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface MetadataReport {
   cameraMake?: string;
@@ -28,6 +29,19 @@ const SCORE_LABELS: Record<string, string> = {
   edge_boundaries: "Edges",
   symmetry: "Symmetry",
   textures: "Textures",
+};
+
+const SCORE_DESCRIPTIONS: Record<string, string> = {
+  skin_texture: "Checks pores, smoothness, and unnatural plastic-like appearance often seen in AI faces.",
+  hair: "Looks for individual strand detail vs. blobby, melted, or repeating hair masses.",
+  eyes: "Verifies matching reflections, iris detail, pupil shape, and gaze alignment.",
+  teeth_mouth: "Checks tooth count, gum line consistency, and lip texture realism.",
+  hands_fingers: "Counts fingers and checks proportions, joints, and nail details — common AI failure points.",
+  background: "Detects warped lines, floating objects, or inconsistent blur in the surroundings.",
+  lighting: "Checks shadow direction consistency and realistic specular highlights across the scene.",
+  edge_boundaries: "Looks for halo effects or blending artifacts where the subject meets the background.",
+  symmetry: "Flags suspiciously perfect symmetry, which is a hallmark of AI generation.",
+  textures: "Inspects fabric weave, surface materials, and any text for AI-typical distortions.",
 };
 
 function getScoreBadgeClasses(score: number): string {
@@ -110,17 +124,25 @@ const ResultDisplay = ({ result, confidence, metadataReport, scores }: ResultDis
       {scores && Object.keys(scores).length > 0 && (
         <div className="rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm">
           <h4 className="text-sm font-semibold text-foreground mb-3">Forensic Area Scores</h4>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(scores).map(([key, score]) => (
-              <span
-                key={key}
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getScoreBadgeClasses(score)}`}
-              >
-                {SCORE_LABELS[key] || key}
-                <span className="font-mono font-bold">{score === -1 ? "N/A" : score}</span>
-              </span>
-            ))}
-          </div>
+          <TooltipProvider delayDuration={150}>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(scores).map(([key, score]) => (
+                <Tooltip key={key}>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={`inline-flex cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getScoreBadgeClasses(score)}`}
+                    >
+                      {SCORE_LABELS[key] || key}
+                      <span className="font-mono font-bold">{score === -1 ? "N/A" : score}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-xs">{SCORE_DESCRIPTIONS[key] || "Forensic check for this area."}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
         </div>
       )}
 
