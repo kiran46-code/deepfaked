@@ -124,17 +124,25 @@ const ResultDisplay = ({ result, confidence, metadataReport, scores }: ResultDis
       {scores && Object.keys(scores).length > 0 && (
         <div className="rounded-xl border border-border bg-card/50 p-5 backdrop-blur-sm">
           <h4 className="text-sm font-semibold text-foreground mb-3">Forensic Area Scores</h4>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(scores).map(([key, score]) => (
-              <span
-                key={key}
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getScoreBadgeClasses(score)}`}
-              >
-                {SCORE_LABELS[key] || key}
-                <span className="font-mono font-bold">{score === -1 ? "N/A" : score}</span>
-              </span>
-            ))}
-          </div>
+          <TooltipProvider delayDuration={150}>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(scores).map(([key, score]) => (
+                <Tooltip key={key}>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={`inline-flex cursor-help items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${getScoreBadgeClasses(score)}`}
+                    >
+                      {SCORE_LABELS[key] || key}
+                      <span className="font-mono font-bold">{score === -1 ? "N/A" : score}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-xs">{SCORE_DESCRIPTIONS[key] || "Forensic check for this area."}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
         </div>
       )}
 
