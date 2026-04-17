@@ -1,4 +1,5 @@
 import { ShieldCheck, ShieldAlert, BarChart3, Info, Camera, Calendar, Monitor, MapPin, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface MetadataReport {
   cameraMake?: string;
