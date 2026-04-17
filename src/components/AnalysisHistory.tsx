@@ -64,7 +64,7 @@ const AnalysisHistory = ({ history, onClear }: Props) => {
                       EXIF
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-[10px] text-warning bg-warning/10 px-1.5 py-0.5 rounded-full">
                       <AlertTriangle className="h-2.5 w-2.5" />
                       No EXIF
                     </span>

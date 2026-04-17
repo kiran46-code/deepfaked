@@ -47,7 +47,7 @@ const SCORE_DESCRIPTIONS: Record<string, string> = {
 function getScoreBadgeClasses(score: number): string {
   if (score === -1) return "bg-muted text-muted-foreground";
   if (score <= 3) return "bg-success/15 text-success";
-  if (score <= 6) return "bg-amber-500/15 text-amber-500";
+  if (score <= 6) return "bg-warning/15 text-warning";
   return "bg-destructive/15 text-destructive";
 }
 
@@ -129,8 +129,8 @@ const ResultDisplay = ({ result, confidence, metadataReport, scores }: ResultDis
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 text-success px-2 py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-success" /> 0–3 Real
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-500 px-2 py-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> 4–6 Uncertain
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 text-warning px-2 py-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-warning" /> 4–6 Uncertain
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 text-destructive px-2 py-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-destructive" /> 7–10 AI
@@ -169,14 +169,14 @@ const ResultDisplay = ({ result, confidence, metadataReport, scores }: ResultDis
             {metadataReport.metadataPresent ? (
               <CheckCircle2 className="h-4 w-4 text-success" />
             ) : (
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
             )}
             <h4 className="text-sm font-semibold text-foreground">Metadata Analysis</h4>
             <span
               className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full ${
                 metadataReport.metadataPresent
                   ? "bg-success/10 text-success"
-                  : "bg-amber-500/10 text-amber-500"
+                  : "bg-warning/10 text-warning"
               }`}
             >
               {metadataReport.metadataPresent ? "Present" : "Missing"}
