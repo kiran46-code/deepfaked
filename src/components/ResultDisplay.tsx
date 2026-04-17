@@ -31,6 +31,19 @@ const SCORE_LABELS: Record<string, string> = {
   textures: "Textures",
 };
 
+const SCORE_DESCRIPTIONS: Record<string, string> = {
+  skin_texture: "Checks pores, smoothness, and unnatural plastic-like appearance often seen in AI faces.",
+  hair: "Looks for individual strand detail vs. blobby, melted, or repeating hair masses.",
+  eyes: "Verifies matching reflections, iris detail, pupil shape, and gaze alignment.",
+  teeth_mouth: "Checks tooth count, gum line consistency, and lip texture realism.",
+  hands_fingers: "Counts fingers and checks proportions, joints, and nail details — common AI failure points.",
+  background: "Detects warped lines, floating objects, or inconsistent blur in the surroundings.",
+  lighting: "Checks shadow direction consistency and realistic specular highlights across the scene.",
+  edge_boundaries: "Looks for halo effects or blending artifacts where the subject meets the background.",
+  symmetry: "Flags suspiciously perfect symmetry, which is a hallmark of AI generation.",
+  textures: "Inspects fabric weave, surface materials, and any text for AI-typical distortions.",
+};
+
 function getScoreBadgeClasses(score: number): string {
   if (score === -1) return "bg-muted text-muted-foreground";
   if (score <= 3) return "bg-success/15 text-success";
