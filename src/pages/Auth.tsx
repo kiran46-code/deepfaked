@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { useNavigate as _useNavigate } from "react-router-dom";
+import logo from "/logo.png";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

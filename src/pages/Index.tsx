@@ -1,9 +1,10 @@
-import { ShieldCheck, Cpu, Zap, Eye, FileSearch, LogOut } from "lucide-react";
+import { Cpu, Zap, Eye, FileSearch, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DetectorPanel from "@/components/DetectorPanel";
 import AnalysisHistory from "@/components/AnalysisHistory";
 import { useAnalysisHistory } from "@/hooks/useAnalysisHistory";
 import { useAuth } from "@/hooks/useAuth";
+import logo from "/logo.png";
 
 const features = [
   {
@@ -63,9 +64,7 @@ const Index = () => {
       <div className="relative z-10 flex flex-col items-center px-4 py-12 sm:py-16">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-          </div>
+          <img src={logo} alt="DeepFake Detector logo" width={48} height={48} className="h-12 w-12" />
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
             Deep<span className="text-gradient">Fake</span> Detector
           </h1>
