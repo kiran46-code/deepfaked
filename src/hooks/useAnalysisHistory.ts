@@ -78,15 +78,15 @@ export function useAnalysisHistory() {
       if (!user) return;
       const { data, error } = await supabase
         .from("analyses")
-        .insert({
+        .insert([{
           user_id: user.id,
           result: record.result,
           confidence: record.confidence,
           reasoning: record.reasoning ?? null,
-          metadata_report: record.metadataReport ?? null,
-          scores: record.scores ?? null,
+          metadata_report: (record.metadataReport ?? null) as never,
+          scores: (record.scores ?? null) as never,
           thumbnail: record.thumbnail,
-        })
+        }])
         .select("id, result, confidence, reasoning, metadata_report, scores, thumbnail, created_at")
         .single();
 
