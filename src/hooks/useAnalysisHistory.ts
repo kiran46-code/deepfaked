@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { MetadataReport } from "@/components/ResultDisplay";
@@ -103,6 +104,7 @@ export function useAnalysisHistory() {
     async (record: Omit<AnalysisRecord, "id" | "timestamp">) => {
       if (!user) {
         console.warn("[useAnalysisHistory] addRecord called without a signed-in user — skipping");
+        toast.error("Not signed in — scan was not saved to history");
         return;
       }
 
@@ -112,6 +114,9 @@ export function useAnalysisHistory() {
         blob = dataUrlToBlob(record.thumbnail);
       } catch (e) {
         console.error("[useAnalysisHistory] Failed to decode thumbnail data URL:", e);
+        toast.error("Couldn't process the thumbnail image", {
+          description: e instanceof Error ? e.message : String(e),
+        });
         return;
       }
 
@@ -123,6 +128,9 @@ export function useAnalysisHistory() {
 
       if (uploadError) {
         console.error("[useAnalysisHistory] Failed to upload thumbnail:", uploadError);
+        toast.error("Failed to upload thumbnail", {
+          description: uploadError.message,
+        });
         return;
       }
 
@@ -142,11 +150,13 @@ export function useAnalysisHistory() {
 
       if (error) {
         console.error("[useAnalysisHistory] Failed to save analysis:", error);
+        toast.error("Failed to save analysis", { description: error.message });
         // Best-effort cleanup of orphaned upload
         await supabase.storage.from(BUCKET).remove([path]);
         return;
       }
       console.log("[useAnalysisHistory] saved analysis", data.id);
+      toast.success("Saved to history");
       const newRecord = await rowToRecord(data as AnalysesRow);
       setHistory((prev) => [newRecord, ...prev].slice(0, MAX_HISTORY));
     },
