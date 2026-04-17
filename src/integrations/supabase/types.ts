@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      analyses: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          metadata_report: Json | null
+          reasoning: string | null
+          result: string
+          scores: Json | null
+          thumbnail: string
+          user_id: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          id?: string
+          metadata_report?: Json | null
+          reasoning?: string | null
+          result: string
+          scores?: Json | null
+          thumbnail: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          metadata_report?: Json | null
+          reasoning?: string | null
+          result?: string
+          scores?: Json | null
+          thumbnail?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
