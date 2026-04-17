@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useNavigate as _useNavigate } from "react-router-dom";
 import logo from "/logo.png";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -86,9 +85,7 @@ const Auth = () => {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex items-center justify-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-          </div>
+          <img src={logo} alt="DeepFake Detector logo" width={48} height={48} className="h-12 w-12" />
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Deep<span className="text-gradient">Fake</span> Detector
           </h1>
