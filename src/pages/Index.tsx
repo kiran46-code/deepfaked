@@ -1,7 +1,9 @@
-import { ShieldCheck, Cpu, Zap, Eye, FileSearch } from "lucide-react";
+import { ShieldCheck, Cpu, Zap, Eye, FileSearch, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import DetectorPanel from "@/components/DetectorPanel";
 import AnalysisHistory from "@/components/AnalysisHistory";
 import { useAnalysisHistory } from "@/hooks/useAnalysisHistory";
+import { useAuth } from "@/hooks/useAuth";
 
 const features = [
   {
